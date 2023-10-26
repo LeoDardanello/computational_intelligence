@@ -13,4 +13,4 @@ The second euristic is a bit more sophisticated and tries to estimate how many s
 
 
 Some preprocessing is also done to consider some (rare) edge cases.
-Credits to [PaolaMts](https://github.com/PaolaMts) for the forced_sets function
+Code developed jointly with [PaolaMts](https://github.com/PaolaMts) 
