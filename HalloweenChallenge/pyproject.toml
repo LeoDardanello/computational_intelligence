@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "halloweenchallenge"
+version = "0.1.0"
+description = "A proposal of solution of the halloween challenge for the Computational Intelligence Course @ Polito 2023-24"
+authors = ["Leo <dardanelloleonardo@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+ipykernel = "^6.26.0"
+numpy = "^1.26.1"
+scipy = "^1.11.3"
+tqdm = "^4.66.1"
+
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.26.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
