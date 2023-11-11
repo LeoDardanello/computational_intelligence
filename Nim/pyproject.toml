@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "nim"
+version = "0.1.0"
+description = "second assignment of the Computational Intelligence course @ PoliTo"
+authors = ["Leo <dardanelloleonardo@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+numpy = "^1.26.1"
+
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.26.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
