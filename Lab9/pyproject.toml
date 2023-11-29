@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "lab9"
+version = "0.1.0"
+description = "Assignment for Computational Intelligence @ PoliTo"
+authors = ["Leo <dardanelloleonardo@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+ipykernel = "^6.27.0"
+numpy = "^1.26.2"
+
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.27.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
