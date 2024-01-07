@@ -109,7 +109,7 @@ class DQLPlayer():
             return action[0],action[1],action_ind
         
 
-    def continue_QDN_move(self,old_board,new_board,action,valid):
+    def continue_DQN_move(self,old_board,new_board,action,valid):
         result=self.check_winner(new_board)
         if result is not None:
             done=True
@@ -157,11 +157,18 @@ class DQLPlayer():
                 self.moves_before_update=10
         return
 
-    def make_move_forward_only(self,board):
-        board_tensor=torch.tensor(board.flatten(),dtype=torch.float32)
-        action_ind=torch.argmax(self.model.forward(board_tensor)) # forward
-        action=self.moves_embbeding[action_ind]
-        return action[0],action[1]
+    def make_move_forward_only(self,board,random=False):
+        if random:
+            possible_moves = self.get_ok_moves(board)
+            random_cell_inds=np.random.choice(len(possible_moves)) # random index of the possible move
+            random_cell = possible_moves[random_cell_inds] # random tuple of row and col indexs
+            random_dir = self.get_ok_dir(random_cell) # random direction
+            return  random_cell, random_dir
+        else:
+            board_tensor=torch.tensor(board.flatten(),dtype=torch.float32)
+            action_ind=torch.argmax(self.model.forward(board_tensor)) # forward
+            action=self.moves_embbeding[action_ind]
+            return action[0],action[1]
 
 class HumanPlayer():
     def __init__(self,symbol):

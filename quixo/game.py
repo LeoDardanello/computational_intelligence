@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from enum import Enum
 import numpy as np
-
+from tqdm import tqdm
 # Rules on PDF
 
 
@@ -79,9 +79,9 @@ class Game(object):
     def play(self, player1: Player, player2: Player) -> int:
         '''Play the game. Returns the winning player'''
         players = [player1, player2]
-        n_games=100
+        n_games=5000
         results = [0,0] 
-        for i in range(n_games):
+        for i in tqdm(range(n_games)):
             current_player_idx = 1
             winner = -1
             while winner < 0:
@@ -96,7 +96,7 @@ class Game(object):
                         ok=self.__move(from_pos, slide, current_player_idx)
                         valid= True if ok else False
                         new_board = deepcopy(self._board)
-                        players[current_player_idx].continue_QDN_move(old_board,new_board,action_id,valid)
+                        players[current_player_idx].continue_DQN_move(old_board,new_board,action_id,valid)
                         # print("DQL agent move: ", from_pos, slide,ok)
                     else:
                         # random player keeps trying until it finds a valid move
@@ -126,6 +126,11 @@ class Game(object):
                     old_board = deepcopy(self._board)
                     from_pos, slide = players[current_player_idx].make_move_forward_only(self._board)
                     ok=self.__move(from_pos, slide, current_player_idx)
+                    if not ok: # if the trained DQN Agent made an invalid move, to avoid getting stuck in a loop
+                               # select a random move 
+                        while not ok:
+                            from_pos, slide = players[current_player_idx].make_move_forward_only(self._board,True)
+                            ok=self.__move(from_pos, slide, current_player_idx)
                     print("DQL agent move: ", from_pos, slide,ok)
                 else:
                     # Human player keeps trying until it finds a valid move
