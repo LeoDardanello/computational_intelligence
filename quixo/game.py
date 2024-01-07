@@ -39,7 +39,12 @@ class Game(object):
 
     def print(self):
         '''Prints the board. -1 are neutral pieces, 0 are pieces of player 0, 1 pieces of player 1'''
-        print(self._board)
+        # print(self._board)
+        for row in self._board:
+            formatted_row = [' X ' if cell==1 else ' O ' if cell==0 else ' . ' for cell in row]
+            print('|'.join(formatted_row))
+            print('-' * (len(row) * 4 - 1))
+        return 
 
     def check_winner(self) -> int:
         '''Check the winner. Returns the player ID of the winner if any, otherwise returns -1'''
@@ -74,6 +79,41 @@ class Game(object):
     def play(self, player1: Player, player2: Player) -> int:
         '''Play the game. Returns the winning player'''
         players = [player1, player2]
+        n_games=100
+        results = [0,0] 
+        for i in range(n_games):
+            current_player_idx = 1
+            winner = -1
+            while winner < 0:
+                current_player_idx += 1
+                current_player_idx %= len(players)
+                ok = False
+                while not ok:
+                    if players[current_player_idx].__class__.__name__=="DQLPlayer":
+                        # DQL agent makes only valid moves 
+                        old_board = deepcopy(self._board)
+                        from_pos, slide ,action_id= players[current_player_idx].make_move(self._board)
+                        ok=self.__move(from_pos, slide, current_player_idx)
+                        valid= True if ok else False
+                        new_board = deepcopy(self._board)
+                        players[current_player_idx].continue_QDN_move(old_board,new_board,action_id,valid)
+                        # print("DQL agent move: ", from_pos, slide,ok)
+                    else:
+                        # random player keeps trying until it finds a valid move
+                        from_pos, slide = players[current_player_idx].make_move(self)
+                        ok = self.__move(from_pos, slide, current_player_idx)
+                        # print("random player move: ", from_pos, slide,ok)
+                # print("#########################")
+                # self.print()
+                    winner = self.check_winner()
+            results[winner]+=1
+
+        return results
+
+    def play_testing(self, player1: Player, player2: Player) -> int:
+        '''Play the game. Returns the winning player'''
+        self._board = np.ones((5, 5), dtype=np.uint8) * -1 # reset the board
+        players = [player1, player2]
         current_player_idx = 1
         winner = -1
         while winner < 0:
@@ -81,9 +121,21 @@ class Game(object):
             current_player_idx %= len(players)
             ok = False
             while not ok:
-                from_pos, slide = players[current_player_idx].make_move(self)
-                ok = self.__move(from_pos, slide, current_player_idx)
+                if players[current_player_idx].__class__.__name__=="DQLPlayer":
+                    # DQL agent  
+                    old_board = deepcopy(self._board)
+                    from_pos, slide = players[current_player_idx].make_move_forward_only(self._board)
+                    ok=self.__move(from_pos, slide, current_player_idx)
+                    print("DQL agent move: ", from_pos, slide,ok)
+                else:
+                    # Human player keeps trying until it finds a valid move
+                    from_pos, slide = players[current_player_idx].make_move(self)
+                    ok = self.__move(from_pos, slide, current_player_idx)
+                    print("Human player move: ", from_pos, slide,ok)
+            print("#########################")
+            self.print()
             winner = self.check_winner()
+
         return winner
 
     def __move(self, from_pos: tuple[int, int], slide: Move, player_id: int) -> bool:
@@ -91,12 +143,12 @@ class Game(object):
         if player_id > 2:
             return False
         # Oh God, Numpy arrays
-        prev_value = deepcopy(self._board[(from_pos[1], from_pos[0])])
-        acceptable = self.__take((from_pos[1], from_pos[0]), player_id)
+        prev_value = deepcopy(self._board[(from_pos[0], from_pos[1])])
+        acceptable = self.__take((from_pos[0], from_pos[1]), player_id)
         if acceptable:
-            acceptable = self.__slide((from_pos[1], from_pos[0]), slide)
+            acceptable = self.__slide((from_pos[0], from_pos[1]), slide)
             if not acceptable:
-                self._board[(from_pos[1], from_pos[0])] = deepcopy(prev_value)
+                self._board[(from_pos[0], from_pos[1])] = deepcopy(prev_value)
         return acceptable
 
     def __take(self, from_pos: tuple[int, int], player_id: int) -> bool:

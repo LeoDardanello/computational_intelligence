@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "quixo"
+version = "0.1.0"
+description = "Final project for the Computational Intelligence course"
+authors = ["Leo <dardanelloleonardo@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.28.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
