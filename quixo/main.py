@@ -1,9 +1,9 @@
 import random
-from game import Game, Move, Player
+from game import Game, Move
 from MyPlayer import DQLPlayer,HumanPlayer
 
 
-class RandomPlayer(Player):
+class RandomPlayer():
     def __init__(self) -> None:
         super().__init__()
 
@@ -35,8 +35,8 @@ def print_cell_indexs():
 def play_against_agent():
     print("Cells indexs:")
     print_cell_indexs()
-    HumanPlayer=HumanPlayer(1)
-    res=g.play_testing(player1,HumanPlayer)
+    HumanPlyr=HumanPlayer(1)
+    res=g.play_testing(player1,HumanPlyr)
     if res==1:
         print("You won!")
     else:
@@ -47,6 +47,7 @@ if __name__ == '__main__':
     # g.print()
     player1 = DQLPlayer(1,0) # 1 epsilon, 0 symbol
     player2 = RandomPlayer()
+    print("Training the agent:")
     res = g.play(player1, player2)
     print(res)
     print("DQLPlayer vs RandomPlayer winnig rate: ", (res[0]/(res[0]+res[1]))*100,"%")

@@ -182,15 +182,15 @@ class HumanPlayer():
         self.slide_transform={"t":Move.TOP,"r":Move.RIGHT,"b":Move.BOTTOM,"l":Move.LEFT}
 
     def make_move(self,board):
-        pos=int(input("Make your move: select the cell: "))
-        while pos not in [1,2,3,4,5,6,10,11,15,16,20,21,22,23,24,25]:
+        pos=input("Make your move: select the cell: ")
+        while pos not in ["1","2","3","4","5","6","10","11","15","16","20","21","22","23","24","25"]:
             print("Invalid move")
-            pos=int(input("select the cell: "))
-        pos=self.pos_transform[pos]
-        slide=input("select the slide: ['t','r','b','l']: ")
+            pos=input("Make your move: select the cell: ")
+        pos=self.pos_transform[int(pos)]
+        slide=input("select the slide: ['t'(TOP),'r'(RIGHT),'b'(BOTTOM),'l'(LEFT)]: ")
         while slide not in ["t","r","b","l"]:
             print("Invalid move")
-            slide=input("select the slide: ['t','r','b','l']: ")
+            slide=input("select the slide: ['t'(TOP),'r'(RIGHT),'b'(BOTTOM),'l'(LEFT)]: ")
         slide=self.slide_transform[slide]
         return pos,slide
 
