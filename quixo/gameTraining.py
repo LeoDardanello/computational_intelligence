@@ -2,43 +2,18 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from enum import Enum
 import numpy as np
-
+from tqdm import tqdm
+from game import Move
 # Rules on PDF
 
 
-class Move(Enum):
-    '''
-    Selects where you want to place the taken piece. The rest of the pieces are shifted
-    '''
-    TOP = 0
-    BOTTOM = 1
-    LEFT = 2
-    RIGHT = 3
 
-
-class Player(ABC):
-    def __init__(self) -> None:
-        '''You can change this for your player if you need to handle state/have memory'''
-        pass
-
-    @abstractmethod
-    def make_move(self, game: 'Game') -> tuple[tuple[int, int], Move]:
-        '''
-        The game accepts coordinates of the type (X, Y). X goes from left to right, while Y goes from top to bottom, as in 2D graphics.
-        Thus, the coordinates that this method returns shall be in the (X, Y) format.
-
-        game: the Quixo game. You can use it to override the current game with yours, but everything is evaluated by the main game
-        return values: this method shall return a tuple of X,Y positions and a move among TOP, BOTTOM, LEFT and RIGHT
-        '''
-        pass
-
-
-class Game(object):
+class GameTraining(object):
     def __init__(self) -> None:
         self._board = np.ones((5, 5), dtype=np.uint8) * -1
         self.current_player_idx = 1
 
-    def get_board(self) -> np.ndarray:
+    def get_board(self):
         '''
         Returns the board
         '''
@@ -52,52 +27,124 @@ class Game(object):
 
     def print(self):
         '''Prints the board. -1 are neutral pieces, 0 are pieces of player 0, 1 pieces of player 1'''
-        print(self._board)
+        for row in self._board:
+            formatted_row = [' X ' if cell==1 else ' O ' if cell==0 else ' . ' for cell in row]
+            print('|'.join(formatted_row))
+            print('-' * (len(row) * 4 - 1))
+        return 
 
     def check_winner(self) -> int:
         '''Check the winner. Returns the player ID of the winner if any, otherwise returns -1'''
         # for each row
+        player = self.get_current_player()
+        winner = -1
         for x in range(self._board.shape[0]):
             # if a player has completed an entire row
             if self._board[x, 0] != -1 and all(self._board[x, :] == self._board[x, 0]):
-                # return the relative id
-                return self._board[x, 0]
+                # return winner is this guy
+                winner = self._board[x, 0]
+        if winner > -1 and winner != self.get_current_player():
+            return winner
         # for each column
         for y in range(self._board.shape[1]):
             # if a player has completed an entire column
             if self._board[0, y] != -1 and all(self._board[:, y] == self._board[0, y]):
                 # return the relative id
-                return self._board[0, y]
+                winner = self._board[0, y]
+        if winner > -1 and winner != self.get_current_player():
+            return winner
         # if a player has completed the principal diagonal
         if self._board[0, 0] != -1 and all(
             [self._board[x, x]
                 for x in range(self._board.shape[0])] == self._board[0, 0]
         ):
             # return the relative id
-            return self._board[0, 0]
+            winner = self._board[0, 0]
+        if winner > -1 and winner != self.get_current_player():
+            return winner
         # if a player has completed the secondary diagonal
         if self._board[0, -1] != -1 and all(
             [self._board[x, -(x + 1)]
              for x in range(self._board.shape[0])] == self._board[0, -1]
         ):
             # return the relative id
-            return self._board[0, -1]
-        return -1
+            winner = self._board[0, -1]
+        return winner
 
-    def play(self, player1: Player, player2: Player) -> int:
+    def play(self, player1, player2) -> int:
         '''Play the game. Returns the winning player'''
         players = [player1, player2]
+        n_games= 5000
+        results = [0,0]
+        
+        for i in tqdm(range(n_games)):
+            self.current_player_idx = 1 if n_games%2==0 else 0
+            going_second = True if n_games%2==0 else False
+            winner = -1
+            while winner < 0:
+                self.current_player_idx += 1
+                self.current_player_idx %= len(players)
+                ok = False
+                while not ok:
+                    if players[self.current_player_idx].__class__.__name__=="DQLPlayer":
+                        # print("entro")
+                        if going_second:
+                            players[self.current_player_idx].set_symbol(1)
+                        else:
+                            players[self.current_player_idx].set_symbol(0) 
+                        # DQL agent makes moves 
+                        old_board = deepcopy(self._board)
+                        from_pos, slide ,action_id= players[self.current_player_idx].make_move_training(self._board,going_second)
+                        ok=self.__move(from_pos, slide, self.current_player_idx)
+                        # print("DQL agent move: ", from_pos, slide,ok)
+                        valid= True if ok else False
+                        new_board = deepcopy(self._board)
+                        players[self.current_player_idx].continue_DQN_move_training(old_board,new_board,action_id,valid,going_second)
+                    else:
+                        # print("entro2")
+                        # random player keeps trying until it finds a valid move
+                        from_pos, slide = players[self.current_player_idx].make_move(self)
+                        ok = self.__move(from_pos, slide, self.current_player_idx)
+                        # print("random player move: ", from_pos, slide,ok)
+                # print("#########################")
+                # self.print()
+                    winner = self.check_winner()
+            results[winner]+=1
+            print("Game ",i," winner: ",winner," results: ",results)
+
+        return results
+
+    def play_against_human(self, player1, player2) -> int:
+        '''Play the game. Returns the winning player'''
+        self._board = np.ones((5, 5), dtype=np.uint8) * -1 # reset the board
+        players = [player1, player2]
+        current_player_idx = 1
         winner = -1
         while winner < 0:
-            self.current_player_idx += 1
-            self.current_player_idx %= len(players)
+            current_player_idx += 1
+            current_player_idx %= len(players)
             ok = False
             while not ok:
-                from_pos, slide = players[self.current_player_idx].make_move(
-                    self)
-                ok = self.__move(from_pos, slide, self.current_player_idx)
-                # print("player: ",self.current_player_idx,"from pos:",from_pos,"slide: ",slide,"ok: ",ok)
+                if players[current_player_idx].__class__.__name__=="DQLPlayer":
+                    # DQL agent  
+                    old_board = deepcopy(self._board)
+                    from_pos, slide = players[current_player_idx].make_move(self)
+                    ok=self.__move(from_pos, slide, current_player_idx)
+                    if not ok: # if the trained DQN Agent made an invalid move, to avoid getting stuck in a loop
+                               # select a random move 
+                        while not ok:
+                            from_pos, slide = players[current_player_idx].make_move(self._board,True)
+                            ok=self.__move(from_pos, slide, current_player_idx)
+                    print("DQL agent move: ", from_pos, slide,ok)
+                else:
+                    # Human player keeps trying until it finds a valid move
+                    from_pos, slide = players[current_player_idx].make_move(self)
+                    ok = self.__move(from_pos, slide, current_player_idx)
+                    print("Human player move: ", from_pos, slide,ok)
+            print("#########################")
+            self.print()
             winner = self.check_winner()
+
         return winner
 
     def __move(self, from_pos: tuple[int, int], slide: Move, player_id: int) -> bool:
@@ -168,6 +215,7 @@ class Game(object):
             acceptable_bottom: bool = from_pos == (4, 4) and (
                 slide == Move.TOP or slide == Move.LEFT)
         # check if the move is acceptable
+        # print("aceeptable top ",acceptable_top," bottom ",acceptable_bottom," left ",acceptable_left," right ",acceptable_right)
         acceptable: bool = acceptable_top or acceptable_bottom or acceptable_left or acceptable_right
         # if it is
         if acceptable:
@@ -209,4 +257,5 @@ class Game(object):
                         i + 1, from_pos[1])]
                 # move the piece down
                 self._board[(self._board.shape[0] - 1, from_pos[1])] = piece
+        # print("from pos",from_pos," slide ",slide," acceptable ",acceptable)
         return acceptable

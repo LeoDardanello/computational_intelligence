@@ -8,11 +8,15 @@ class DQN(torch.nn.Module):
         Directions encoding: top, right, bottom,  left
         """
         self.model=torch.nn.Sequential(
-            torch.nn.Linear(25, 256),
+            torch.nn.Linear(25, 128),
             torch.nn.ReLU(),
-            torch.nn.Linear(256, 256),
+            torch.nn.Dropout(p=0.5),
+            torch.nn.Linear(128, 128),
             torch.nn.ReLU(),
-            torch.nn.Linear(256, 44) #number of possible states, 12 cells with 3 possible directions each
+            torch.nn.Dropout(p=0.5),
+            torch.nn.Linear(128, 128),
+            torch.nn.ReLU(),
+            torch.nn.Linear(128, 44) #number of possible states, 12 cells with 3 possible directions each
         )                            #4 cells (corners) with 2 possible directions each
         self.gamma=gamma
         self.loss_fn = torch.nn.HuberLoss()
