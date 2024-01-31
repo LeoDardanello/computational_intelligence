@@ -87,7 +87,7 @@ class GameTraining(object):
                 ok = False
                 while not ok:
                     if players[self.current_player_idx].__class__.__name__=="DQLPlayer":
-                        # print("entro")
+                       
                         if going_second:
                             players[self.current_player_idx].set_symbol(1)
                         else:
@@ -96,56 +96,23 @@ class GameTraining(object):
                         old_board = deepcopy(self._board)
                         from_pos, slide ,action_id= players[self.current_player_idx].make_move_training(self._board,going_second)
                         ok=self.__move(from_pos, slide, self.current_player_idx)
-                        # print("DQL agent move: ", from_pos, slide,ok)
+                       
                         valid= True if ok else False
                         new_board = deepcopy(self._board)
                         players[self.current_player_idx].continue_DQN_move_training(old_board,new_board,action_id,valid,going_second)
                     else:
-                        # print("entro2")
+                    
                         # random player keeps trying until it finds a valid move
                         from_pos, slide = players[self.current_player_idx].make_move(self)
                         ok = self.__move(from_pos, slide, self.current_player_idx)
-                        # print("random player move: ", from_pos, slide,ok)
-                # print("#########################")
-                # self.print()
+  
                     winner = self.check_winner()
             results[winner]+=1
             print("Game ",i," winner: ",winner," results: ",results)
 
         return results
 
-    def play_against_human(self, player1, player2) -> int:
-        '''Play the game. Returns the winning player'''
-        self._board = np.ones((5, 5), dtype=np.uint8) * -1 # reset the board
-        players = [player1, player2]
-        current_player_idx = 1
-        winner = -1
-        while winner < 0:
-            current_player_idx += 1
-            current_player_idx %= len(players)
-            ok = False
-            while not ok:
-                if players[current_player_idx].__class__.__name__=="DQLPlayer":
-                    # DQL agent  
-                    old_board = deepcopy(self._board)
-                    from_pos, slide = players[current_player_idx].make_move(self)
-                    ok=self.__move(from_pos, slide, current_player_idx)
-                    if not ok: # if the trained DQN Agent made an invalid move, to avoid getting stuck in a loop
-                               # select a random move 
-                        while not ok:
-                            from_pos, slide = players[current_player_idx].make_move(self._board,True)
-                            ok=self.__move(from_pos, slide, current_player_idx)
-                    print("DQL agent move: ", from_pos, slide,ok)
-                else:
-                    # Human player keeps trying until it finds a valid move
-                    from_pos, slide = players[current_player_idx].make_move(self)
-                    ok = self.__move(from_pos, slide, current_player_idx)
-                    print("Human player move: ", from_pos, slide,ok)
-            print("#########################")
-            self.print()
-            winner = self.check_winner()
 
-        return winner
 
     def __move(self, from_pos: tuple[int, int], slide: Move, player_id: int) -> bool:
         '''Perform a move'''

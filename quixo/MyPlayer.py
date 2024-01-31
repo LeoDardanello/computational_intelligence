@@ -122,13 +122,11 @@ class DQLPlayer():
     def make_move_training(self, board,going_second)->tuple[tuple[int, int], Move]:
         
         if np.random.random() < self.eps:
-            # print("random move")
             possible_moves = self.get_ok_moves(board)
             random_cell_inds=np.random.choice(len(possible_moves)) # random index of the possible move
             random_cell = possible_moves[random_cell_inds] # random tuple of row and col indexs
             random_dir = self.get_ok_dir(random_cell) # random direction 
             self.eps = max(self.eps_min, self.eps-self.eps_decay)
-            # print("eps: ",self.eps)
             return  random_cell, random_dir, random_cell_inds
         else:
             if going_second:
@@ -136,13 +134,9 @@ class DQLPlayer():
                                                                                                #see the board from the second player perspective
             else:
                 board_tensor=torch.tensor(board.flatten(),dtype=torch.float32)
-
             action_ind=torch.argmax(self.model.forward(board_tensor)) # forward 
             action=self.moves_embbeding[action_ind] # get the action from the list
-            # print("action_network: ",action)
-            # print("eps_min: ",self.eps_min,"eps_actual: ",self.eps,"eps_decay: ",self.eps_decay)
             self.eps = max(self.eps_min, self.eps-self.eps_decay)
-            # print("eps: ",self.eps)
             return action[0],action[1],action_ind
         
 
@@ -169,7 +163,6 @@ class DQLPlayer():
 
         # update the replay memory
         self.replay_memory.append((tuple(old_board),action,reward,tuple(new_board),done))
-        # print("memory len: ",len(self.replay_memory))
         # train the model
         if len(self.replay_memory) > self.batch_size:
             minibatch = random.sample(self.replay_memory,self.batch_size) #extract random sampled fromm the replay memory to train the model
@@ -187,11 +180,11 @@ class DQLPlayer():
                 if done_batch[i]:
                     q_values_target[i,action_batch[i]] = reward_batch[i]  # If the state is terminal, the q-value is just the reward
                 else:
-                    q_values_target[i,action_batch[i]] = reward_batch[i] + self.gamma * torch.max(q_values_next_state[i]) #Bellman equation: R_t+gamma*max_a(Q(s_t+1,a))
+                                                        #Bellman equation: R_t+gamma*max_a(Q(s_t+1,a))
+                    q_values_target[i,action_batch[i]] = reward_batch[i] + self.gamma * torch.max(q_values_next_state[i]) 
 
             self.model.optimizer.zero_grad()
             loss = self.model.loss_fn(q_values, q_values_target) 
-            # print("loss: ",loss)
             loss.backward() # backprop
             self.model.optimizer.step() 
 
@@ -214,11 +207,6 @@ class DQLPlayer():
         # check if move is valid, if is not do a random move to avoid getting stuck
         
         if not((board[action[0]]==-1 or board[action[0]]==self.symbol) and self.check_dir_ok(action[0],action[1])):
-            # print("invalid move ",action)
-            # print("board[action[0]]: ",board[action[0]])
-            # print("board[action[0]]==-1: ",board[action[0]]==-1)
-            # print("board[action[0]]==self.symbol: ",board[action[0]]==self.symbol)
-            # print("self.check_dir_ok(action[0],action[1]): ",self.check_dir_ok(action[0],action[1]))
             possible_moves = self.get_ok_moves(board)
             random_cell_inds=np.random.choice(len(possible_moves)) # random index of the possible move
             random_cell = possible_moves[random_cell_inds] # random tuple of row and col indexs
@@ -231,29 +219,6 @@ class DQLPlayer():
         new_board = [1 if el == 0 else 0 if el == 1 else el for el in board]
         return new_board
 
-class HumanPlayer():
-    def __init__(self,symbol):
-        self.symbol=symbol
-        self.pos_transform={1:(0,0),2:(0,1),3:(0,2),4:(0,3),5:(0,4),
-                            6:(1,0),7:(1,1),8:(1,2),9:(1,3),10:(1,4),
-                            11:(2,0),12:(2,1),13:(2,2),14:(2,3),15:(2,4),
-                            16:(3,0),17:(3,1),18:(3,2),19:(3,3),20:(3,4),
-                            21:(4,0),22:(4,1),23:(4,2),24:(4,3),25:(4,4)}
-
-        self.slide_transform={"t":Move.TOP,"r":Move.RIGHT,"b":Move.BOTTOM,"l":Move.LEFT}
-
-    def make_move(self,board):
-        pos=input("Make your move: select the cell: ")
-        while pos not in ["1","2","3","4","5","6","10","11","15","16","20","21","22","23","24","25"]:
-            print("Invalid move")
-            pos=input("Make your move: select the cell: ")
-        pos=self.pos_transform[int(pos)]
-        slide=input("select the slide: ['t'(TOP),'r'(RIGHT),'b'(BOTTOM),'l'(LEFT)]: ")
-        while slide not in ["t","r","b","l"]:
-            print("Invalid move")
-            slide=input("select the slide: ['t'(TOP),'r'(RIGHT),'b'(BOTTOM),'l'(LEFT)]: ")
-        slide=self.slide_transform[slide]
-        return pos,slide
 
 
         

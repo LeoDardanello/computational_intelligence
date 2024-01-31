@@ -1,7 +1,7 @@
 import random
 from gameTraining import  Move
 from gameTraining import GameTraining
-from MyPlayer import DQLPlayer,HumanPlayer
+from MyPlayer import DQLPlayer
 from game import Game
 import os
 
@@ -15,39 +15,6 @@ class RandomPlayer():
 
         return from_pos, move
 
-
-
-def print_cell_indexs():
-    '''Prints the board. -1 are neutral pieces, 0 are pieces of player 0, 1 pieces of player 1'''
-    board_mapping = [
-        [1, ' | ', 2, ' | ', 3, ' | ', 4, ' | ', 5],
-        ['-' * 12] * 2,
-        [6, ' | ', 7, ' | ', 8, ' | ', 9, ' | ', 10],
-        ['-' * 12] * 2,
-        [11, ' | ', 12, ' | ', 13, ' | ', 14, ' | ', 15],
-        ['-' * 12] * 2,
-        [16, ' | ', 17, ' | ', 18, ' | ', 19, ' | ', 20],
-        ['-' * 12] * 2,
-        [21, ' | ', 22, ' | ', 23, ' | ', 24, ' | ', 25]
-    ]
-
-    for row in board_mapping:
-        print(''.join(map(lambda x: f"{x:2}", row)))
-
-def play_against_agent():
-    print("////////////////////////////////")
-    print("////////////////////////////////")
-    print("The board is numbered as follows:")
-    print("Cells indexs:")
-    print_cell_indexs()
-    print("You are going second, your symbol is 'X'")
-    HumanPlyr=HumanPlayer(1)
-    g=GameTraining()
-    res=g.play_against_human(player1,HumanPlyr)
-    if res==1:
-        print("You won!")
-    else:
-        print("You lost!")
 
 if __name__ == '__main__':
     player2 = RandomPlayer()
@@ -91,9 +58,7 @@ if __name__ == '__main__':
                 win_as_second+=1
         avg+=win_as_second
     print("Test; wins as second player:",avg/10)
-    ans=input("Would you like to play against the trained AGENT? (y/n)")
-    if ans=="y":
-        play_against_agent()
+
 
 
 
